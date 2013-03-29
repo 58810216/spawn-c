@@ -7,4 +7,5 @@ int init_main(int worker_num);
 
 int stop_main();
 
+void back_to_main(int finish);
 #endif
