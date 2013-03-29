@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-*.o
 *.s
 a.out
-.*
-=======
+
 # Object files
 *.o
 
@@ -21,4 +18,3 @@ a.out
 *.exe
 *.out
 *.app
->>>>>>> febe2dda9e1589f8afb792441c3b9a585c7d4476
