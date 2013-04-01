@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "list.h"
 #include "spawn.h"
@@ -93,17 +94,19 @@ void back_to_main(int finish)
 {
     struct light_thread *lt = NULL;
     long rsp = 0;
+    long stack = 0;
     int i;
 
     asm volatile("movq %%rsp, %0\n\t":"=r"(rsp)::"memory");
     
     for (i = 0; i < g_workers.num; i++)
     {
-        if (!g_workers.running_threads[i])
+        stack = *(volatile long *)&g_workers.running_threads[i];
+        if (!stack)
         {
             continue;
         }
-        if (rsp - (long)g_workers.running_threads[i] <= STACK_SIZE)
+        if (rsp > stack && rsp - stack <= STACK_SIZE)
         {
             lt = g_workers.running_threads[i];
             g_workers.running_threads[i] = NULL;
@@ -111,13 +114,7 @@ void back_to_main(int finish)
         }
     }
 
-    if (!lt)
-    {
-        int *p = 0;
-        printf("cannot find  %p\n", (void *)rsp);
-        *p = 100;
-        return ;
-    }
+    assert(lt);
 
     lt->stop = finish;
 
@@ -150,9 +147,8 @@ void back_to_main_and_stop()
 void add_lt_to_waiting(struct light_thread *lt)
 {
     pthread_mutex_lock(&g_workers.mutex);
-    list_add(&lt->list, &g_workers.waiting_list);
+    list_add_tail(&lt->list, &g_workers.waiting_list);
     pthread_mutex_unlock(&g_workers.mutex);
-    printf("add lt %p\n", lt);
 }
 
 void add_lt_to_waiting_head(struct light_thread *lt)
@@ -160,7 +156,6 @@ void add_lt_to_waiting_head(struct light_thread *lt)
     pthread_mutex_lock(&g_workers.mutex);
     list_add(&lt->list, &g_workers.waiting_list);
     pthread_mutex_unlock(&g_workers.mutex);
-    printf("add lt %p\n", lt);
 }
 
 struct light_thread *new_lt()
@@ -249,7 +244,6 @@ void *worker_run(void *arg)
             }
             else
             {
-                printf("finish %p\n", pw);
                 free_lt(pw);
             }
         }

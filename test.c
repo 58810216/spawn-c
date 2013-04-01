@@ -6,10 +6,10 @@
 void foo(void *arg)
 {
     long long output =(long long) arg;
-    //printf("arg is %llu\n", output);
-    //back_to_main(0);
+    printf("arg is %llu\n", output);
+    back_to_main(0);
     output++;
-    //printf("output is %llu\n", output);
+    printf("output is %llu\n", output);
 }
 
 int main()
